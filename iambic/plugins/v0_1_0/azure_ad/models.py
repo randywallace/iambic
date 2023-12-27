@@ -41,19 +41,23 @@ class AzureADOrganization(BaseModel):
 
     async def set_azure_access_token(self):  # pragma: no cover
         if not self.access_token:
-            # initialize the client here
-            self.client = msal.ConfidentialClientApplication(
-                self.client_id,
-                authority=f"https://login.microsoftonline.com/{self.tenant_id}",
-                client_credential=self.client_secret.get_secret_value(),
-            )
-            token_result = self.client.acquire_token_for_client(
-                ["https://graph.microsoft.com/.default"]
-            )
-            if "access_token" in token_result:
-                self.access_token = token_result["access_token"]
+            env_access_token = os.environ.get('AZURE_ACCESS_TOKEN')
+            if env_access_token != None:
+                self.access_token = env_access_token
             else:
-                raise Exception("Access token was not successfully acquired")
+            # initialize the client here
+              self.client = msal.ConfidentialClientApplication(
+                  self.client_id,
+                  authority=f"https://login.microsoftonline.com/{self.tenant_id}",
+                  client_credential=self.client_secret.get_secret_value(),
+              )
+              token_result = self.client.acquire_token_for_client(
+                  ["https://graph.microsoft.com/.default"]
+              )
+              if "access_token" in token_result:
+                  self.access_token = token_result["access_token"]
+              else:
+                  raise Exception("Access token was not successfully acquired")
         return self.access_token
 
     async def _make_request(
